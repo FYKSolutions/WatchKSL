@@ -147,7 +147,7 @@ namespace WatchKSL
             {
                 var fromAddress = new MailAddress("FYKsolutions@gmail.com", "FYK Solutions");
                 var toAddress = new MailAddress(textBoxEmail.Text.ToString(), "Client");
-                const string fromPassword = "";
+                const string fromPassword = ""; //put your password here
                 string subject = "Chen's list for "+textBoxKeyword.Text.ToString() 
                        +" Price Range From $"+textBoxPriceMin.Text.ToString()+" To $"+textBoxPriceMax.Text.ToString();
 

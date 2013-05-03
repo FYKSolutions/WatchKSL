@@ -20,7 +20,7 @@ namespace WatchKSL
     {
         private string searchWord, url, htmlResult, emailContent;
         private List<SearchResult> searchResults;
-        
+        private StringBuilder sBuilder;
 
         public Form1()
         {
@@ -30,6 +30,7 @@ namespace WatchKSL
             webBrowser1.ScriptErrorsSuppressed = true;
             url = "http://www.ksl.com/index.php?nid=231&search=";
             searchResults = new List<SearchResult>();
+            sBuilder = new StringBuilder();
             #endregion
         }
 
@@ -90,7 +91,8 @@ namespace WatchKSL
 
         private void parseHTML( string strToParse)
         {
-            emailContent = "";
+            emailContent="";
+            sBuilder.Clear();
             searchResults.Clear();
 
             HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
@@ -106,15 +108,16 @@ namespace WatchKSL
                     doc.LoadHtml(detailBoxNode.OuterHtml.ToString());
                     HtmlAgilityPack.HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//span[contains(@class,'adTitle')]");
                     SearchResult searchResult=new SearchResult();
-
+                         
                     if (titleNode != null)
                     {
                         doc.LoadHtml(titleNode.OuterHtml.ToString());
                         HtmlAgilityPack.HtmlNode linkNode = doc.DocumentNode.SelectSingleNode("//a[contains(@class,'listlink')]");
                         if (linkNode != null)
                         {
-                            emailContent += linkNode.InnerText.TrimStart() + '\n';
-                            emailContent += "www.ksl.com/" + linkNode.Attributes["href"].Value + "\n";
+                            sBuilder.Append(string.Format("{0}{1}", linkNode.InnerText.TrimStart(), Environment.NewLine));
+                            sBuilder.Append(string.Format("{0}{1}{2}","www.ksl.com/",linkNode.Attributes["href"].Value,Environment.NewLine));
+
                             searchResult.title=linkNode.InnerText.TrimStart();
                             searchResult.link=linkNode.Attributes["href"].Value;
 
@@ -122,20 +125,22 @@ namespace WatchKSL
                             HtmlAgilityPack.HtmlNode priceNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'price')]");
                             if (priceNode != null)
                             {
-                                emailContent += "Price: " + priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length-2,2) + "\n";
+                                sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2)
+                                    , Environment.NewLine));                               
                                 searchResult.price = priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2);
                             }
 
                             HtmlAgilityPack.HtmlNode descNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'adDesc')]");
                             if (descNode != null)
                             {
-                                emailContent += "Description: " + descNode.InnerText.TrimStart() + "\n\n";
+                                sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", descNode.InnerText.TrimStart(), Environment.NewLine, Environment.NewLine));                                
                                 searchResult.description=descNode.InnerText.TrimStart();
                             }
 
                             searchResults.Add(new SearchResult { title =searchResult.title , link =searchResult.link,price=searchResult.price,
                                 description=searchResult.description});                            
-                        }                        
+                        }
+                        emailContent = sBuilder.ToString();
                     }
                 }
             }                       
@@ -147,7 +152,7 @@ namespace WatchKSL
             {
                 var fromAddress = new MailAddress("FYKsolutions@gmail.com", "FYK Solutions");
                 var toAddress = new MailAddress(textBoxEmail.Text.ToString(), "Client");
-                const string fromPassword = ""; //put your password here
+                const string fromPassword = "RichardChen777"; //put your password here
                 string subject = "Chen's list for "+textBoxKeyword.Text.ToString() 
                        +" Price Range From $"+textBoxPriceMin.Text.ToString()+" To $"+textBoxPriceMax.Text.ToString();
 

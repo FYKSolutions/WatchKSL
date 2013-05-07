@@ -14,18 +14,22 @@ using System.Windows.Forms;
 using HtmlAgilityPack;
 using System.Net.Mail;
 using System.Configuration;
+using DataAccess;
+
 
 namespace WatchKSL
 {
     public partial class Form1 : Form
     {
         private StringBuilder sBuilder;
-        private string HtmlResult { set; get; }
-        private List<SearchResult> SearchResults {set;get;}
+        private string HtmlResult { get; set; }
+        private List<SearchResult> SearchResults {get;set;}
 
-        public string SearchWord { set; get; }
-        public string Url { set; get; }
-        public string EmailContent { set; get; }
+        public string SearchWord { get; set; }
+        public string Url { get; set; }
+        public string EmailContent { get; set; }
+        public WatchKSLEntities MyDataContext {get;set;}
+        
 
         public Form1()
         {
@@ -35,6 +39,7 @@ namespace WatchKSL
             Url = "http://www.ksl.com/index.php?nid=231&search=";
             SearchResults = new List<SearchResult>();
             sBuilder = new StringBuilder();
+            MyDataContext=new WatchKSLEntities();
             #endregion
         }
 
@@ -71,7 +76,7 @@ namespace WatchKSL
             listBox1.DataSource = SearchResults;
             listBox1.DisplayMember = "title";
 
-            
+            CustomerTransaction();
             SendMail();
         }
 
@@ -201,6 +206,17 @@ namespace WatchKSL
             }
             EmailContent = sBuilder.ToString();
         }
-       
+
+        public void CustomerTransaction()
+        {
+            string customerEmail = textBoxEmail.Text.ToString();
+
+            if (!MyDataContext.Customers.Any(o => o.Email==customerEmail))
+            {
+                MyDataContext.Customers.Add(new Customer { Email = textBoxEmail.Text.ToString() });
+                MyDataContext.SaveChanges();
+            }
+        }
+
     }
 }

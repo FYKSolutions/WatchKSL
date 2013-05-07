@@ -13,31 +13,35 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using HtmlAgilityPack;
 using System.Net.Mail;
+using System.Configuration;
 
 namespace WatchKSL
 {
     public partial class Form1 : Form
     {
-        private string searchWord, url, htmlResult, emailContent;
-        private List<SearchResult> searchResults;
         private StringBuilder sBuilder;
+        private string HtmlResult { set; get; }
+        private List<SearchResult> SearchResults {set;get;}
+
+        public string SearchWord { set; get; }
+        public string Url { set; get; }
+        public string EmailContent { set; get; }
 
         public Form1()
         {
             #region Initialize the form
-
             InitializeComponent();
             webBrowser1.ScriptErrorsSuppressed = true;
-            url = "http://www.ksl.com/index.php?nid=231&search=";
-            searchResults = new List<SearchResult>();
+            Url = "http://www.ksl.com/index.php?nid=231&search=";
+            SearchResults = new List<SearchResult>();
             sBuilder = new StringBuilder();
             #endregion
         }
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            assembleSearchWord();
-            webBrowser1.Navigate(url + searchWord);
+            AssembleSearchWord();
+            webBrowser1.Navigate(Url + SearchWord);
         }
 
         private void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
@@ -53,32 +57,34 @@ namespace WatchKSL
 
         private void buttonPHPPosting_Click(object sender, EventArgs e)
         {
-            searchEngine();     
+            SearchEngine();
+            SendMail();
         }
 
-        private void searchEngine()
+        public void SearchEngine()
         {
             WebClient client = new WebClient();
-            assembleSearchWord();
-            htmlResult = client.DownloadString(url + searchWord);
-            parseHTML(htmlResult);
-
+            AssembleSearchWord();
+            HtmlResult = client.DownloadString(Url + SearchWord);
+            ParseHTML(HtmlResult);
             listBox1.DataSource = null;
-            listBox1.DataSource = searchResults;
+            listBox1.DataSource = SearchResults;
             listBox1.DisplayMember = "title";
-            sendMail();
+
+            
+            SendMail();
         }
 
-        private void assembleSearchWord()
+        private void AssembleSearchWord()
         {
             string[] list = textBoxKeyword.Text.Split(' ');
-            searchWord = string.Join("+", list);
+            SearchWord = string.Join("+", list);
 
             if (textBoxPriceMin != null)
-                searchWord += "&min_price=" + textBoxPriceMin.Text.ToString();
+                SearchWord += "&min_price=" + textBoxPriceMin.Text.ToString();
             if (textBoxPriceMax != null)
-                searchWord += "&max_price=" + textBoxPriceMax.Text.ToString();
-            searchWord += "&sort=1";
+                SearchWord += "&max_price=" + textBoxPriceMax.Text.ToString();
+            SearchWord += "&sort=1";
 
             #region unusedCode
             //searchWord += "&addisplay=%5BNOW-1HOURS+TO+NOW%5D&sort=1&userid=&markettype=sale&adsstate=&nocache=1&o_facetSelected=true&o_facetKey=ad+posted&o_facetVal=Last+Hour&viewSelect=list&viewNumResults=12&sort=1";
@@ -89,11 +95,11 @@ namespace WatchKSL
             #endregion
         }
 
-        private void parseHTML( string strToParse)
+        private void ParseHTML( string strToParse)
         {
-            emailContent="";
-            sBuilder.Clear();
-            searchResults.Clear();
+            //EmailContent="";
+            //sBuilder.Clear();
+            SearchResults.Clear();
 
             HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
             htmlDoc.LoadHtml(strToParse);
@@ -115,8 +121,8 @@ namespace WatchKSL
                         HtmlAgilityPack.HtmlNode linkNode = doc.DocumentNode.SelectSingleNode("//a[contains(@class,'listlink')]");
                         if (linkNode != null)
                         {
-                            sBuilder.Append(string.Format("{0}{1}", linkNode.InnerText.TrimStart(), Environment.NewLine));
-                            sBuilder.Append(string.Format("{0}{1}{2}","www.ksl.com/",linkNode.Attributes["href"].Value,Environment.NewLine));
+                           // sBuilder.Append(string.Format("{0}{1}", linkNode.InnerText.TrimStart(), Environment.NewLine));
+                           // sBuilder.Append(string.Format("{0}{1}{2}","www.ksl.com/",linkNode.Attributes["href"].Value,Environment.NewLine));
 
                             searchResult.title=linkNode.InnerText.TrimStart();
                             searchResult.link=linkNode.Attributes["href"].Value;
@@ -125,34 +131,35 @@ namespace WatchKSL
                             HtmlAgilityPack.HtmlNode priceNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'price')]");
                             if (priceNode != null)
                             {
-                                sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2)
-                                    , Environment.NewLine));                               
+                                //sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2)
+                                //    , Environment.NewLine));                               
                                 searchResult.price = priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2);
                             }
 
                             HtmlAgilityPack.HtmlNode descNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'adDesc')]");
                             if (descNode != null)
                             {
-                                sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", descNode.InnerText.TrimStart(), Environment.NewLine, Environment.NewLine));                                
+                                //sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", descNode.InnerText.TrimStart(), Environment.NewLine, Environment.NewLine));                                
                                 searchResult.description=descNode.InnerText.TrimStart();
                             }
 
-                            searchResults.Add(new SearchResult { title =searchResult.title , link =searchResult.link,price=searchResult.price,
+                            SearchResults.Add(new SearchResult { title =searchResult.title , link =searchResult.link,price=searchResult.price,
                                 description=searchResult.description});                            
                         }
-                        emailContent = sBuilder.ToString();
+                        //EmailContent = sBuilder.ToString();
                     }
                 }
             }                       
         } 
 
-        private void sendMail()
+        public void SendMail()
         {
+            AssembleEmailContent();
             try
             {
-                var fromAddress = new MailAddress("FYKsolutions@gmail.com", "FYK Solutions");
+                var fromAddress = new MailAddress( ConfigurationManager.AppSettings["serverEmail"], "FYK Solutions");
                 var toAddress = new MailAddress(textBoxEmail.Text.ToString(), "Client");
-                const string fromPassword = "RichardChen777"; //put your password here
+                string fromPassword = ConfigurationManager.AppSettings["serverEmailPassword"];
                 string subject = "Chen's list for "+textBoxKeyword.Text.ToString() 
                        +" Price Range From $"+textBoxPriceMin.Text.ToString()+" To $"+textBoxPriceMax.Text.ToString();
 
@@ -169,7 +176,7 @@ namespace WatchKSL
                 using (var message = new MailMessage(fromAddress, toAddress)
                 {
                     Subject = subject,
-                    Body = emailContent
+                    Body = EmailContent
                 })
                 {
                     smtp.Send(message);
@@ -179,6 +186,20 @@ namespace WatchKSL
             {
                 MessageBox.Show("OOPS email can't be sent! \n" +e.ToString());
             }
+        }
+
+        private void AssembleEmailContent()
+        {
+            sBuilder.Clear();
+            EmailContent = "";
+            foreach (SearchResult searchResult in SearchResults)
+            {
+                sBuilder.Append(string.Format("{0}{1}", searchResult.title, Environment.NewLine));
+                sBuilder.Append(string.Format("{0}{1}{2}", "www.ksl.com/", searchResult.link, Environment.NewLine));
+                sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", searchResult.price, Environment.NewLine));
+                sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", searchResult.description, Environment.NewLine, Environment.NewLine));                                
+            }
+            EmailContent = sBuilder.ToString();
         }
        
     }

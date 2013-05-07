@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WatchKSL
 {
-    class SearchResult
+    public class SearchResult
     {
         public string emailResult { set; get; }
         public string description { set; get; }

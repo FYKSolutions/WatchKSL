@@ -1,7 +1,7 @@
 USE [master]
 GO
 
-/****** Object:  Database [WatchKSL]    Script Date: 5/7/2013 1:19:04 AM ******/
+/****** Object:  Database [WatchKSL]    Script Date: 5/27/2013 5:18:26 PM ******/
 CREATE DATABASE [WatchKSL]
  CONTAINMENT = NONE
  ON  PRIMARY 
@@ -113,7 +113,7 @@ GO
 USE [WatchKSL]
 GO
 
-/****** Object:  Table [dbo].[Customer]    Script Date: 5/7/2013 1:19:22 AM ******/
+/****** Object:  Table [dbo].[Customer]    Script Date: 5/27/2013 5:19:13 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -137,11 +137,50 @@ GO
 SET ANSI_PADDING OFF
 GO
 
+USE [WatchKSL]
+GO
+
+/****** Object:  Table [dbo].[SearchQueue]    Script Date: 5/27/2013 5:19:29 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[SearchQueue](
+	[CustomerId] [bigint] NOT NULL,
+	[Keyword] [varchar](250) NULL,
+	[PriceMin] [float] NULL,
+	[PriceMax] [float] NULL,
+	[Status] [bit] NULL,
+	[QueueDate] [date] NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
+ CONSTRAINT [PK_SearchQueue] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+ALTER TABLE [dbo].[SearchQueue]  WITH CHECK ADD  CONSTRAINT [FK_SearchQueue_Customer] FOREIGN KEY([CustomerId])
+REFERENCES [dbo].[Customer] ([CustomerId])
+GO
+
+ALTER TABLE [dbo].[SearchQueue] CHECK CONSTRAINT [FK_SearchQueue_Customer]
+GO
+
 
 USE [WatchKSL]
 GO
 
-/****** Object:  Table [dbo].[SearchResult]    Script Date: 5/7/2013 1:19:31 AM ******/
+/****** Object:  Table [dbo].[SearchResult]    Script Date: 5/27/2013 5:19:48 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -152,7 +191,7 @@ SET ANSI_PADDING ON
 GO
 
 CREATE TABLE [dbo].[SearchResult](
-	[CustomerId] [bigint] NULL,
+	[CustomerId] [bigint] NOT NULL,
 	[Title] [varchar](100) NULL,
 	[Description] [varchar](250) NULL,
 	[Id] [bigint] IDENTITY(1,1) NOT NULL,
@@ -168,7 +207,7 @@ GO
 SET ANSI_PADDING OFF
 GO
 
-ALTER TABLE [dbo].[SearchResult] ADD  DEFAULT (getdate()) FOR [CreatedDate]
+ALTER TABLE [dbo].[SearchResult] ADD  CONSTRAINT [DF__SearchRes__Creat__1367E606]  DEFAULT (getdate()) FOR [CreatedDate]
 GO
 
 ALTER TABLE [dbo].[SearchResult]  WITH CHECK ADD  CONSTRAINT [FK_SearchResults_Customer] FOREIGN KEY([CustomerId])
@@ -177,5 +216,6 @@ GO
 
 ALTER TABLE [dbo].[SearchResult] CHECK CONSTRAINT [FK_SearchResults_Customer]
 GO
+
 
 

@@ -26,6 +26,7 @@ namespace DataAccess
         }
     
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<SearchQueue> SearchQueues { get; set; }
         public DbSet<SearchResult> SearchResults { get; set; }
     }
 }

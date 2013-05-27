@@ -12,13 +12,15 @@ namespace DataAccess
     using System;
     using System.Collections.Generic;
     
-    public partial class SearchResult
+    public partial class SearchQueue
     {
         public long CustomerId { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string Keyword { get; set; }
+        public Nullable<double> PriceMin { get; set; }
+        public Nullable<double> PriceMax { get; set; }
+        public Nullable<bool> Status { get; set; }
+        public Nullable<System.DateTime> QueueDate { get; set; }
         public long Id { get; set; }
-        public System.DateTime CreatedDate { get; set; }
     
         public virtual Customer Customer { get; set; }
     }

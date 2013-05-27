@@ -40,6 +40,7 @@
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.textBoxEmail = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.buttonStartTimer = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // buttonStart
@@ -144,11 +145,22 @@
             this.label4.TabIndex = 11;
             this.label4.Text = "Email";
             // 
+            // buttonStartTimer
+            // 
+            this.buttonStartTimer.Location = new System.Drawing.Point(891, 471);
+            this.buttonStartTimer.Name = "buttonStartTimer";
+            this.buttonStartTimer.Size = new System.Drawing.Size(75, 23);
+            this.buttonStartTimer.TabIndex = 12;
+            this.buttonStartTimer.Text = "Start Timer Loop";
+            this.buttonStartTimer.UseVisualStyleBackColor = true;
+            this.buttonStartTimer.Click += new System.EventHandler(this.buttonStartTimer_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1054, 489);
+            this.ClientSize = new System.Drawing.Size(1054, 513);
+            this.Controls.Add(this.buttonStartTimer);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.textBoxEmail);
             this.Controls.Add(this.listBox1);
@@ -182,6 +194,7 @@
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.TextBox textBoxEmail;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button buttonStartTimer;
     }
 }
 

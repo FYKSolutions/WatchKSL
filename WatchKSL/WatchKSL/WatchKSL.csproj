@@ -94,9 +94,9 @@
       <Project>{231c8de3-54f6-4155-91b0-13ad086f7ecf}</Project>
       <Name>DataAccess</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SearchEngine\SearchEngine.csproj">
+    <ProjectReference Include="..\SearchEngine\SearchEngineSystem.csproj">
       <Project>{778b349d-d7de-4a59-8e9f-e81c58e42757}</Project>
-      <Name>SearchEngine</Name>
+      <Name>SearchEngineSystem</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

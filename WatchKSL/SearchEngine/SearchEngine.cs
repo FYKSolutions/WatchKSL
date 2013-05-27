@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 
 
-namespace SearchEngine
+namespace SearchEngineSystem
 {
     public class SearchEngine
     {
@@ -186,16 +186,34 @@ namespace SearchEngine
         {
             string customerEmail = EmailAddress;
 
+            ///See if the customer is in the database, if not add her
             if (!myDataContext.Customers.Any(o => o.Email == customerEmail))
             {
                 myDataContext.Customers.Add(new Customer { Email = EmailAddress });
                 myDataContext.SaveChanges();
             }
+
             Customer customer = (from c in myDataContext.Customers
                                  where c.Email == customerEmail
                                  select c).FirstOrDefault();
 
-            //Now check if the search result is already in the database
+            ///Check if the keyword and price range is in the database. If not, add it. 
+            if (!customer.SearchQueues.Any(o=> o.Keyword==Keyword && o.PriceMin==Convert.ToDouble(PriceMin)
+                    && o.PriceMax==Convert.ToDouble(PriceMax)))
+            {
+                customer.SearchQueues.Add(new SearchQueue 
+                    {PriceMax=Convert.ToDouble(PriceMax)
+                    ,PriceMin=Convert.ToDouble(PriceMin)
+                    ,Keyword=Keyword
+                    ,QueueDate=DateTime.Now
+                    ,Status=true
+                    });
+            }
+
+
+
+            ///Now add search results to customer 
+            //Check if the search result is already in the database. If not, add them. 
 
             List<SearchResult> itemsToDelete = new List<SearchResult>(); //first define a set for items to delete
             foreach (var resultItem in SearchResults)

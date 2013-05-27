@@ -50,6 +50,9 @@
       <DependentUpon>WatchKSLDataModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SearchQueue.cs">
+      <DependentUpon>WatchKSLDataModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="SearchResult.cs">
       <DependentUpon>WatchKSLDataModel.tt</DependentUpon>
     </Compile>

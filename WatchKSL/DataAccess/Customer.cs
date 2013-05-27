@@ -16,12 +16,14 @@ namespace DataAccess
     {
         public Customer()
         {
+            this.SearchQueues = new HashSet<SearchQueue>();
             this.SearchResults = new HashSet<SearchResult>();
         }
     
         public long CustomerId { get; set; }
         public string Email { get; set; }
     
+        public virtual ICollection<SearchQueue> SearchQueues { get; set; }
         public virtual ICollection<SearchResult> SearchResults { get; set; }
     }
 }

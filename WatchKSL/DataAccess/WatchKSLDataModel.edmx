@@ -4,10 +4,15 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="WatchKSLModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="WatchKSLModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityContainer Name="WatchKSLModelStoreContainer">
           <EntitySet Name="Customer" EntityType="WatchKSLModel.Store.Customer" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="SearchQueue" EntityType="WatchKSLModel.Store.SearchQueue" store:Type="Tables" Schema="dbo" />
           <EntitySet Name="SearchResult" EntityType="WatchKSLModel.Store.SearchResult" store:Type="Tables" Schema="dbo" />
+          <AssociationSet Name="FK_SearchQueue_Customer" Association="WatchKSLModel.Store.FK_SearchQueue_Customer">
+            <End Role="Customer" EntitySet="Customer" />
+            <End Role="SearchQueue" EntitySet="SearchQueue" />
+          </AssociationSet>
           <AssociationSet Name="FK_SearchResults_Customer" Association="WatchKSLModel.Store.FK_SearchResults_Customer">
             <End Role="Customer" EntitySet="Customer" />
             <End Role="SearchResult" EntitySet="SearchResult" />
@@ -20,18 +25,42 @@
           <Property Name="CustomerId" Type="bigint" Nullable="false" StoreGeneratedPattern="Identity" />
           <Property Name="Email" Type="varchar" MaxLength="100" />
         </EntityType>
+        <EntityType Name="SearchQueue">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="CustomerId" Type="bigint" Nullable="false" />
+          <Property Name="Keyword" Type="varchar" MaxLength="250" />
+          <Property Name="PriceMin" Type="float" />
+          <Property Name="PriceMax" Type="float" />
+          <Property Name="Status" Type="bit" />
+          <Property Name="QueueDate" Type="date" />
+          <Property Name="Id" Type="bigint" Nullable="false" StoreGeneratedPattern="Identity" />
+        </EntityType>
         <EntityType Name="SearchResult">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
-          <Property Name="CustomerId" Type="bigint" />
+          <Property Name="CustomerId" Type="bigint" Nullable="false" />
           <Property Name="Title" Type="varchar" MaxLength="100" />
           <Property Name="Description" Type="varchar" MaxLength="250" />
           <Property Name="Id" Type="bigint" Nullable="false" StoreGeneratedPattern="Identity" />
           <Property Name="CreatedDate" Type="datetime" Nullable="false" />
         </EntityType>
+        <Association Name="FK_SearchQueue_Customer">
+          <End Role="Customer" Type="WatchKSLModel.Store.Customer" Multiplicity="1" />
+          <End Role="SearchQueue" Type="WatchKSLModel.Store.SearchQueue" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerId" />
+            </Principal>
+            <Dependent Role="SearchQueue">
+              <PropertyRef Name="CustomerId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_SearchResults_Customer">
-          <End Role="Customer" Type="WatchKSLModel.Store.Customer" Multiplicity="0..1" />
+          <End Role="Customer" Type="WatchKSLModel.Store.Customer" Multiplicity="1" />
           <End Role="SearchResult" Type="WatchKSLModel.Store.SearchResult" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Customer">
@@ -42,13 +71,17 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="WatchKSLModel" Alias="Self" p1:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:p1="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityContainer Name="WatchKSLEntities" p1:LazyLoadingEnabled="true">
           <EntitySet Name="Customers" EntityType="WatchKSLModel.Customer" />
+          <EntitySet Name="SearchQueues" EntityType="WatchKSLModel.SearchQueue" />
+          <AssociationSet Name="FK_SearchQueue_Customer" Association="WatchKSLModel.FK_SearchQueue_Customer">
+            <End Role="Customer" EntitySet="Customers" />
+            <End Role="SearchQueue" EntitySet="SearchQueues" />
+          </AssociationSet>
           <EntitySet Name="SearchResults" EntityType="WatchKSLModel.SearchResult" />
           <AssociationSet Name="FK_SearchResults_Customer" Association="WatchKSLModel.FK_SearchResults_Customer">
             <End Role="Customer" EntitySet="Customers" />
@@ -59,24 +92,50 @@
           <Key>
             <PropertyRef Name="CustomerId" />
           </Key>
-          <Property Name="CustomerId" Type="Int64" Nullable="false" p1:StoreGeneratedPattern="Identity" />
-          <Property Name="Email" Type="String" MaxLength="100" Unicode="false" FixedLength="false" />
+          <Property Type="Int64" Name="CustomerId" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="String" Name="Email" MaxLength="100" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="SearchQueues" Relationship="WatchKSLModel.FK_SearchQueue_Customer" FromRole="Customer" ToRole="SearchQueue" />
           <NavigationProperty Name="SearchResults" Relationship="WatchKSLModel.FK_SearchResults_Customer" FromRole="Customer" ToRole="SearchResult" />
         </EntityType>
+        <EntityType Name="SearchQueue">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Type="Int64" Name="CustomerId" Nullable="false" />
+          <Property Type="String" Name="Keyword" MaxLength="250" FixedLength="false" Unicode="false" />
+          <Property Type="Double" Name="PriceMin" />
+          <Property Type="Double" Name="PriceMax" />
+          <Property Type="Boolean" Name="Status" />
+          <Property Type="DateTime" Name="QueueDate" Precision="0" />
+          <Property Type="Int64" Name="Id" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <NavigationProperty Name="Customer" Relationship="WatchKSLModel.FK_SearchQueue_Customer" FromRole="SearchQueue" ToRole="Customer" />
+        </EntityType>
+        <Association Name="FK_SearchQueue_Customer">
+          <End Type="WatchKSLModel.Customer" Role="Customer" Multiplicity="1" />
+          <End Type="WatchKSLModel.SearchQueue" Role="SearchQueue" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Customer">
+              <PropertyRef Name="CustomerId" />
+            </Principal>
+            <Dependent Role="SearchQueue">
+              <PropertyRef Name="CustomerId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityType Name="SearchResult">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
-          <Property Name="CustomerId" Type="Int64" />
-          <Property Name="Title" Type="String" MaxLength="100" Unicode="false" FixedLength="false" />
-          <Property Name="Description" Type="String" MaxLength="250" Unicode="false" FixedLength="false" />
-          <Property Name="Id" Type="Int64" Nullable="false" p1:StoreGeneratedPattern="Identity" />
-          <Property Name="CreatedDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Type="Int64" Name="CustomerId" Nullable="false" />
+          <Property Type="String" Name="Title" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Type="String" Name="Description" MaxLength="250" FixedLength="false" Unicode="false" />
+          <Property Type="Int64" Name="Id" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Type="DateTime" Name="CreatedDate" Nullable="false" Precision="3" />
           <NavigationProperty Name="Customer" Relationship="WatchKSLModel.FK_SearchResults_Customer" FromRole="SearchResult" ToRole="Customer" />
         </EntityType>
         <Association Name="FK_SearchResults_Customer">
-          <End Role="Customer" Type="WatchKSLModel.Customer" Multiplicity="0..1" />
-          <End Role="SearchResult" Type="WatchKSLModel.SearchResult" Multiplicity="*" />
+          <End Type="WatchKSLModel.Customer" Role="Customer" Multiplicity="1" />
+          <End Type="WatchKSLModel.SearchResult" Role="SearchResult" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Customer">
               <PropertyRef Name="CustomerId" />
@@ -86,7 +145,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-      </Schema>
+        </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
@@ -95,19 +154,32 @@
           <EntitySetMapping Name="Customers">
             <EntityTypeMapping TypeName="WatchKSLModel.Customer">
               <MappingFragment StoreEntitySet="Customer">
-                <ScalarProperty Name="CustomerId" ColumnName="CustomerId" />
                 <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="CustomerId" ColumnName="CustomerId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SearchQueues">
+            <EntityTypeMapping TypeName="WatchKSLModel.SearchQueue">
+              <MappingFragment StoreEntitySet="SearchQueue">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="QueueDate" ColumnName="QueueDate" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="PriceMax" ColumnName="PriceMax" />
+                <ScalarProperty Name="PriceMin" ColumnName="PriceMin" />
+                <ScalarProperty Name="Keyword" ColumnName="Keyword" />
+                <ScalarProperty Name="CustomerId" ColumnName="CustomerId" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="SearchResults">
             <EntityTypeMapping TypeName="WatchKSLModel.SearchResult">
               <MappingFragment StoreEntitySet="SearchResult">
-                <ScalarProperty Name="CustomerId" ColumnName="CustomerId" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="Description" ColumnName="Description" />
-                <ScalarProperty Name="Id" ColumnName="Id" />
                 <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="CustomerId" ColumnName="CustomerId" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

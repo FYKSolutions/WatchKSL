@@ -15,7 +15,8 @@ using HtmlAgilityPack;
 using System.Net.Mail;
 using System.Configuration;
 using DataAccess;
-using SearchEngine;
+using SearchEngineSystem;
+using System.Threading;
 
 
 namespace WatchKSL
@@ -24,29 +25,35 @@ namespace WatchKSL
     {
         //private StringBuilder sBuilder;
         //private string HtmlResult { get; set; }
-        private List<SearchEngine.SearchResult> SearchResults {get;set;}
+        private List<SearchEngineSystem.SearchResult> SearchResults {get;set;}
 
         public string SearchWord { get; set; }
         public string Url { get; set; }
         //public string EmailContent { get; set; }
-        //public WatchKSLEntities MyDataContext {get;set;}
-
-        public SearchEngine.SearchEngine searchEngine;
-        
+        public WatchKSLEntities MyDataContext {get;set;}
+        public System.Timers.Timer timer;
+                    
 
         public Form1()
         {
             #region Initialize the form
             InitializeComponent();
             webBrowser1.ScriptErrorsSuppressed = true;
-
-            searchEngine = new SearchEngine.SearchEngine();
             Url = "http://www.ksl.com/index.php?nid=231&search=";
-            SearchResults = new List<SearchEngine.SearchResult>();
+            SearchResults = new List<SearchEngineSystem.SearchResult>();
             //sBuilder = new StringBuilder();
-            //MyDataContext=new WatchKSLEntities();
+            MyDataContext=new WatchKSLEntities();            
             #endregion
         }
+        private void TimerLoop()
+        {
+            timer = new System.Timers.Timer(120000);
+            timer.Elapsed += new System.Timers.ElapsedEventHandler(TimerTick); // Everytime timer ticks, TimerTick will be called
+            timer.Interval = 120000;
+            timer.Enabled = true;                       // Enable the timer
+            timer.Start();  
+        }
+
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
@@ -67,18 +74,12 @@ namespace WatchKSL
 
         private void buttonPHPPosting_Click(object sender, EventArgs e)
         {
+            SearchEngine searchEngine = new SearchEngine();
             searchEngine.Keyword = textBoxKeyword.Text.ToString();
             searchEngine.PriceMax = textBoxPriceMax.Text.ToString();
             searchEngine.PriceMin = textBoxPriceMin.Text.ToString();
             searchEngine.EmailAddress = textBoxEmail.Text.ToString();
-
-            System.Timers.Timer timer = new System.Timers.Timer(600000);
-
-            timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Tick); // Everytime timer ticks, timer_Tick will be called
-            timer.Interval = (600000);
-            timer.Enabled = true;                       // Enable the timer
-            timer.Start();  
-
+            
             SearchResults =searchEngine.Search();
             searchEngine.SendMail();
             listBox1.DataSource = null;
@@ -87,12 +88,33 @@ namespace WatchKSL
 
         }
 
-        void timer_Tick(object sender, EventArgs e)
+        void TimerTick(object sender, EventArgs e)
         {
+            List<SearchQueue> searchItem= new List<SearchQueue>();
+
+            searchItem=(from o in MyDataContext.SearchQueues
+                       where o.Status==true
+                       select o).ToList();
+            foreach (var item in searchItem)
+            {
+                //or you can use ParameterizedThreadStart instead
+                //Thread t = new Thread(()=>SearchJob(item.Keyword,item.PriceMin,item.PriceMax,item.Customer.Email)); 
+               // t.Start();
+
+                SearchJob(item.Keyword, item.PriceMin, item.PriceMax, item.Customer.Email);
+            }
+        }
+
+        void SearchJob(string keyword, Nullable<double> priceMin, Nullable<double> priceMax, string email)
+        {
+            SearchEngine searchEngine=new SearchEngine();
+            searchEngine.Keyword = keyword;
+            searchEngine.PriceMax = priceMax.ToString();
+            searchEngine.PriceMin = priceMin.ToString();
+            searchEngine.EmailAddress = email;
             SearchResults = searchEngine.Search();
             searchEngine.SendMail();
         }
-
 
         //public void SearchEngine()
         //{
@@ -124,6 +146,11 @@ namespace WatchKSL
             //    {"search",searchWord}
             //}; 
             #endregion
+        }
+
+        private void buttonStartTimer_Click(object sender, EventArgs e)
+        {
+            TimerLoop();
         }
 
         //private void ParseHTML( string strToParse)

@@ -16,64 +16,59 @@ namespace SearchEngineSystem
 {
     public class SearchEngine
     {
-        private StringBuilder sBuilder;
-        private string HtmlResult { get; set; }
-        private List<SearchResult> SearchResults { get; set; }
-
-        public string Keyword { get; set; }
-        public string PriceMin { get; set; }
-        public string PriceMax { get; set; }
-        public string EmailAddress { get; set; }
-
-        private string searchWord;
-        private string url;
-        private string emailContent;
+        private string SearchUrl;
+        protected WebClient client = new WebClient();
         private WatchKSLEntities myDataContext;
 
-        public SearchEngine ()
+        public SearchEngine()
         {
-            #region Initialize the form
-            url = "http://www.ksl.com/index.php?nid=231&search=";
-            SearchResults = new List<SearchResult>();
-            sBuilder = new StringBuilder();
             myDataContext = new WatchKSLEntities();
-            #endregion
+            SearchUrl = "http://www.ksl.com/index.php?nid=231&search=";
         }
 
-        public List<SearchResult> Search()
+        public void ProcessSearchRequests(List<SearchRequest> searchRequests)
         {
-            WebClient client = new WebClient();
-            AssembleSearchWord();
-            HtmlResult = client.DownloadString(url + searchWord);
-            ParseHTML(HtmlResult);
-            CustomerTransaction();
-            return (SearchResults);
+            foreach (SearchRequest searchRequest in searchRequests)
+            {
+                ProcessSearchRequest(searchRequest);
+            }
         }
 
-        private void AssembleSearchWord()
+        public void ProcessSearchRequest(SearchRequest searchRequest)
         {
-            string[] list = Keyword.Split(' ');
-            searchWord = string.Join("+", list);
+            string HtmlResult = string.Empty;
 
-            if (PriceMin != null)
-                searchWord += "&min_price=" + PriceMin;
-            if (PriceMax != null)
-                searchWord += "&max_price=" + PriceMax;
-            searchWord += "&sort=1";
+            try
+            {
+                searchRequest.SearchResultsHtml = client.DownloadString(string.Format("{0}{1}{2}", SearchUrl, searchRequest.GetFormattedKeywordString(), "&sort=1"));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to download search result html for website: " + ex.Message);
+            }
 
-            #region unusedCode
-            //searchWord += "&addisplay=%5BNOW-1HOURS+TO+NOW%5D&sort=1&userid=&markettype=sale&adsstate=&nocache=1&o_facetSelected=true&o_facetKey=ad+posted&o_facetVal=Last+Hour&viewSelect=list&viewNumResults=12&sort=1";
-            //NameValueCollection postData = new NameValueCollection()
-            //{
-            //    {"search",searchWord}
-            //}; 
-            #endregion
+            try
+            {
+                searchRequest.SearchResultsFound = ParseHTML(searchRequest.SearchResultsHtml);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to parse search result html: " + ex.Message);
+            }
+
+            try
+            {
+                //ProcessCustomerTransaction(searchRequest);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to complete customer transaction: " + ex.Message);
+            }
         }
-        private void ParseHTML(string strToParse)
+
+        private List<SearchResult> ParseHTML(string strToParse)
         {
-            //EmailContent="";
-            //sBuilder.Clear();
-            SearchResults.Clear();
+            List<SearchResult> searchResults = new List<SearchResult>();
 
             HtmlAgilityPack.HtmlDocument htmlDoc = new HtmlAgilityPack.HtmlDocument();
             htmlDoc.LoadHtml(strToParse);
@@ -81,7 +76,6 @@ namespace SearchEngineSystem
 
             if (detailBoxNodes != null)
             {
-
                 foreach (HtmlNode detailBoxNode in detailBoxNodes)
                 {
                     HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
@@ -98,8 +92,8 @@ namespace SearchEngineSystem
                             // sBuilder.Append(string.Format("{0}{1}", linkNode.InnerText.TrimStart(), Environment.NewLine));
                             // sBuilder.Append(string.Format("{0}{1}{2}","www.ksl.com/",linkNode.Attributes["href"].Value,Environment.NewLine));
 
-                            searchResult.title = linkNode.InnerText.TrimStart();
-                            searchResult.link = linkNode.Attributes["href"].Value;
+                            searchResult.Title = linkNode.InnerText.TrimStart();
+                            searchResult.Link = linkNode.Attributes["href"].Value;
 
                             doc.LoadHtml(detailBoxNode.OuterHtml.ToString());
                             HtmlAgilityPack.HtmlNode priceNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'price')]");
@@ -107,89 +101,40 @@ namespace SearchEngineSystem
                             {
                                 //sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2)
                                 //    , Environment.NewLine));                               
-                                searchResult.price = priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2);
+                                searchResult.Price = priceNode.InnerText.TrimStart().TrimEnd().Remove(priceNode.InnerText.TrimStart().TrimEnd().Length - 2, 2);
                             }
 
                             HtmlAgilityPack.HtmlNode descNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'adDesc')]");
                             if (descNode != null)
                             {
                                 //sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", descNode.InnerText.TrimStart(), Environment.NewLine, Environment.NewLine));                                
-                                searchResult.description = descNode.InnerText.TrimStart();
+                                searchResult.Description = descNode.InnerText.TrimStart();
                             }
 
-                            SearchResults.Add(new SearchResult
+                            searchResults.Add(new SearchResult
                             {
-                                title = searchResult.title,
-                                link = searchResult.link,
-                                price = searchResult.price,
-                                description = searchResult.description
+                                Title = searchResult.Title,
+                                Link = searchResult.Link,
+                                Price = searchResult.Price,
+                                Description = searchResult.Description
                             });
                         }
                         //EmailContent = sBuilder.ToString();
                     }
                 }
             }
-        }
-        public void SendMail()
-        {
-            if (SearchResults.Count != 0)
-            {
-                AssembleEmailContent();
-                try
-                {
-                    var fromAddress = new MailAddress(ConfigurationManager.AppSettings["serverEmail"], "FYK Solutions");
-                    var toAddress = new MailAddress(EmailAddress, "Client");
-                    string fromPassword = ConfigurationManager.AppSettings["serverEmailPassword"];
-                    string subject = "Chen's list for " + Keyword
-                           + " Price Range From $" + PriceMin + " To $" + PriceMax;
 
-
-                    var smtp = new SmtpClient
-                    {
-                        Host = "smtp.gmail.com",
-                        Port = 587,
-                        EnableSsl = true,
-                        DeliveryMethod = SmtpDeliveryMethod.Network,
-                        UseDefaultCredentials = false,
-                        Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
-                    };
-                    using (var message = new MailMessage(fromAddress, toAddress)
-                    {
-                        Subject = subject,
-                        Body = emailContent
-                    })
-                    {
-                        smtp.Send(message);
-                    }
-                }
-                catch (SystemException e)
-                {
-                    MessageBox.Show("OOPS email can't be sent! \n" + e.ToString());
-                }
-            }
-        }
-        private void AssembleEmailContent()
-        {
-            sBuilder.Clear();
-            emailContent = "";
-            foreach (SearchResult searchResult in SearchResults)
-            {
-                sBuilder.Append(string.Format("{0}{1}", searchResult.title, Environment.NewLine));
-                sBuilder.Append(string.Format("{0}{1}{2}", "www.ksl.com/", searchResult.link, Environment.NewLine));
-                sBuilder.Append(string.Format("{0}{1}{2}", "Price: ", searchResult.price, Environment.NewLine));
-                sBuilder.Append(string.Format("{0}{1}{2}{3}", "Description: ", searchResult.description, Environment.NewLine, Environment.NewLine));
-            }
-            emailContent = sBuilder.ToString();
+            return searchResults;
         }
 
-        public void CustomerTransaction()
+        public void ProcessCustomerTransaction(SearchRequest searchRequest)
         {
-            string customerEmail = EmailAddress;
+            string customerEmail = searchRequest.OriginatingSearchUser.EmailAddress;
 
             ///See if the customer is in the database, if not add her
             if (!myDataContext.Customers.Any(o => o.Email == customerEmail))
             {
-                myDataContext.Customers.Add(new Customer { Email = EmailAddress });
+                myDataContext.Customers.Add(new Customer { Email = searchRequest.OriginatingSearchUser.EmailAddress });
                 myDataContext.SaveChanges();
             }
 
@@ -198,33 +143,35 @@ namespace SearchEngineSystem
                                  select c).FirstOrDefault();
 
             ///Check if the keyword and price range is in the database. If not, add it. 
-            if (!customer.SearchQueues.Any(o=> o.Keyword==Keyword && o.PriceMin==Convert.ToDouble(PriceMin)
-                    && o.PriceMax==Convert.ToDouble(PriceMax)))
+            if (!customer.SearchQueues.Any(o => o.Keyword == searchRequest.GetFormattedKeywordString() && o.PriceMin == Convert.ToDouble(searchRequest.PriceMin)
+                    && o.PriceMax == Convert.ToDouble(searchRequest.PriceMax)))
             {
-                customer.SearchQueues.Add(new SearchQueue 
-                    {PriceMax=Convert.ToDouble(PriceMax)
-                    ,PriceMin=Convert.ToDouble(PriceMin)
-                    ,Keyword=Keyword
-                    ,QueueDate=DateTime.Now
-                    ,Status=true
-                    });
+                customer.SearchQueues.Add(new SearchQueue
+                {
+                    PriceMax = Convert.ToDouble(searchRequest.PriceMax)
+                    ,
+                    PriceMin = Convert.ToDouble(searchRequest.PriceMin)
+                    ,
+                    Keyword = searchRequest.GetFormattedKeywordString()
+                    ,
+                    QueueDate = DateTime.Now
+                    ,
+                    Status = true
+                });
             }
-
-
 
             ///Now add search results to customer 
             //Check if the search result is already in the database. If not, add them. 
-
             List<SearchResult> itemsToDelete = new List<SearchResult>(); //first define a set for items to delete
-            foreach (var resultItem in SearchResults)
+            foreach (var resultItem in searchRequest.SearchResultsFound)
             {
                 // you can use this syntax of linq method if (customer.SearchResults.Where( c=>c.Description==searchResult.description)!=null)
-                if (!customer.SearchResults.Any(c => c.Description == resultItem.description))
+                if (!customer.SearchResults.Any(c => c.Description == resultItem.Description))
                 {
                     customer.SearchResults.Add(new DataAccess.SearchResult
                     {
-                        Description = resultItem.description,
-                        Title = resultItem.title,
+                        Description = resultItem.Description,
+                        Title = resultItem.Title,
                         CreatedDate = DateTime.Now
                     });
                 }
@@ -234,8 +181,13 @@ namespace SearchEngineSystem
                 }
 
             }
-            foreach (var item in itemsToDelete) SearchResults.Remove(item);
+
+            foreach (var item in itemsToDelete)
+            {
+                searchRequest.SearchResultsFound.Remove(item);
+            }
+
             myDataContext.SaveChanges();
         }
-    }    
+    }
 }

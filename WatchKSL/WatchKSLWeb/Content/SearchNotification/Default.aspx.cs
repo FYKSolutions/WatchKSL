@@ -20,13 +20,20 @@ public partial class Content_SearchNotification_Default : System.Web.UI.Page
     
     protected void Page_Load(object sender, EventArgs e)
     {
-        SearchRequest mySearchRequest = new SearchRequest();
-            mySearchRequest.OriginatingSearchUser = mySearchUser;
-            mySearchRequest.Keywords.Add("motorcycle");
 
-        searchEngine.ProcessSearchRequest(mySearchRequest);
 
-        NotificationEmail searchResultNotification = new NotificationEmail(mySearchRequest);
-        searchResultNotification.SendMailViaHotmail();
+
+
+        ////Construct a search request
+        //SearchRequest mySearchRequest = new SearchRequest();
+        //    mySearchRequest.OriginatingSearchUser = mySearchUser;   //who is performing the search
+        //    mySearchRequest.Keywords.Add("motorcycle");             //what are they searching for?
+
+        ////Process the search request, results are attached to the search request
+        //searchEngine.ProcessSearchRequest(mySearchRequest);
+
+        ////Send notification email with results of search request
+        //NotificationEmail searchResultNotification = new NotificationEmail(mySearchRequest);
+        //searchResultNotification.SendMailViaHotmail();
     }
 }

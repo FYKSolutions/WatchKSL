@@ -69,8 +69,14 @@
                               HttpContext.Current.User.IsInRole("PayedUser") ||
                               HttpContext.Current.User.IsInRole("SuperUser"))
                           { %>
-                            <li><a id="A1" runat="server" href="~/Content/SearchNotification/Default.aspx">Search Notifications</a></li>
+                            <li><a id="A1" runat="server" href="~/Content/SearchNotification/Default.aspx">Manage Notifications</a></li>
                        <% } %>
+
+                       <% if (HttpContext.Current.User.IsInRole("PayedUser") ||
+                              HttpContext.Current.User.IsInRole("SuperUser"))
+                          { %>
+                            <li><a id="A2" runat="server" href="~/Account/NotificationCredits/Default.aspx">[0 Notification Credits]</a></li>
+                        <% } %>
                     </ul>
                 </nav>
             </div>

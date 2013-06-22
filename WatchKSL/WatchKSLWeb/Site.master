@@ -62,8 +62,6 @@
                 <nav>
                     <ul id="menu">
                         <li><a runat="server" href="~/">Home</a></li>
-                        <li><a runat="server" href="~/About.aspx">About</a></li>
-                        <li><a runat="server" href="~/Contact.aspx">Contact</a></li>
 
                        <% if (HttpContext.Current.User.IsInRole("BasicUser") ||
                               HttpContext.Current.User.IsInRole("PayedUser") ||
@@ -72,10 +70,13 @@
                             <li><a id="A1" runat="server" href="~/Content/SearchNotification/Default.aspx">Manage Notifications</a></li>
                        <% } %>
 
+                        <li><a runat="server" href="~/Contact.aspx">Contact</a></li>
+                        <li><a runat="server" href="~/About.aspx">About</a></li>
+
                        <% if (HttpContext.Current.User.IsInRole("PayedUser") ||
                               HttpContext.Current.User.IsInRole("SuperUser"))
                           { %>
-                            <li><a id="A2" runat="server" href="~/Account/NotificationCredits/Default.aspx">[0 Notification Credits]</a></li>
+                            <li><a id="A2" runat="server" href="~/Account/NotificationCredits/Default.aspx" style="color: red;">[0 Notification Credits]</a></li>
                         <% } %>
                     </ul>
                 </nav>
@@ -92,7 +93,7 @@
         <div class="content-wrapper">
             <div class="float-left">
                 <p>
-                    &copy; <%: DateTime.Now.Year %> - My ASP.NET Application
+                    &copy; <%: DateTime.Now.Year %> - KSL Watcher Application
                 </p>
             </div>
         </div>
